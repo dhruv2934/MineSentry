@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" fill="none">
+  <defs>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#27272A" />
+      <stop offset="100%" stop-color="#18181B" />
+    </linearGradient>
+  </defs>
+  <!-- Shield Icon -->
+  <polygon points="30,8 52,18 52,36 30,52 8,36 8,18" fill="url(#shieldGrad)" stroke="#F59E0B" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Strata / Pick / Mountain Lines inside Shield -->
+  <path d="M16 34 L30 20 L44 34" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 39 L30 31 L38 39" stroke="#E4E4E7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="30" cy="15" r="2.5" fill="#F59E0B" />
+
+  <!-- Typography -->
+  <text x="68" y="37" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="24" fill="#FFFFFF" letter-spacing="1">MINE<tspan fill="#F59E0B">SENTRY</tspan></text>
+  <text x="69" y="49" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="8.5" fill="#A1A1AA" letter-spacing="2.8">GOVERNANCE &amp; INTELLIGENCE</text>
+</svg>
