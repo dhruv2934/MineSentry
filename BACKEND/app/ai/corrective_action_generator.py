@@ -15,6 +15,7 @@ structured_llm = llm.with_structured_output(
     CorrectiveActionRecommendation
 )
 
+## analyzes the confirmed violation, retrieved regulation, risk level, and recurrence information to propose a practical, regulation-compliant corrective action with an appropriate deadline.
 
 def generate_corrective_action(
     observation_text: str,
