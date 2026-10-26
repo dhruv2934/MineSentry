@@ -14,6 +14,7 @@ structured_llm = llm.with_structured_output(
     ObservationExtraction
 )
 
+## analyzes the observation text and extracts factual information about the violation, including the main observed issue, compliance category, number of affected workers, and location.
 
 def extract_observation(
     observation_text: str
