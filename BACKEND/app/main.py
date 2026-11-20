@@ -1,5 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter, Depends
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.dependencies import get_current_user
+
+# Existing API routers
 from app.api.mine import router as mines_router
 from app.api.inspection import router as inspections_router
 from app.api.observation import router as observations_router
@@ -10,10 +14,13 @@ from app.api.corrective_actions import router as corrective_actions_router
 from app.api.alerts import router as alerts_router
 from app.api.risk import router as risk_router
 
-from app.api.corrective_actions_recommendations import router as corrective_action_recommendations_router
+from app.api.corrective_actions_recommendations import (
+    router as corrective_action_recommendations_router
+)
 
-
-from fastapi.middleware.cors import CORSMiddleware
+# Authentication and employee routers
+from app.api.auth import router as auth_router
+from app.api.employee import router as employee_router
 
 
 app = FastAPI(
@@ -23,6 +30,7 @@ app = FastAPI(
 )
 
 
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,7 +40,7 @@ app.add_middleware(
 )
 
 
-
+# Public endpoints
 @app.get("/")
 def root():
     return {
@@ -47,52 +55,39 @@ def health_check():
     }
 
 
+# Centralized protected API router
+protected_api_router = APIRouter(
+    dependencies=[Depends(get_current_user)]
+)
+
+
+# Register all business API routers
+protected_api_router.include_router(mines_router)
+protected_api_router.include_router(inspections_router)
+protected_api_router.include_router(observations_router)
+protected_api_router.include_router(violations_router)
+protected_api_router.include_router(regulations_router)
+protected_api_router.include_router(regulation_chunks_router)
+protected_api_router.include_router(corrective_actions_router)
+protected_api_router.include_router(alerts_router)
+protected_api_router.include_router(risk_router)
+
+protected_api_router.include_router(
+    corrective_action_recommendations_router
+)
+
+protected_api_router.include_router(employee_router)
+
+
+# Public authentication endpoint
 app.include_router(
-    mines_router,
+    auth_router,
     prefix="/api"
 )
 
-app.include_router(
-    inspections_router,
-    prefix="/api"
-)
 
+# Register all protected endpoints under /api
 app.include_router(
-    observations_router,
-    prefix="/api"
-)
-
-app.include_router(
-    violations_router,
-    prefix="/api"
-)
-
-app.include_router(
-    regulations_router,
-    prefix="/api"
-)
-
-app.include_router(
-    regulation_chunks_router,
-    prefix="/api"
-)
-
-app.include_router(
-    corrective_actions_router,
-    prefix="/api"
-)
-
-app.include_router(
-    alerts_router,
-    prefix="/api"
-)
-
-app.include_router(
-    risk_router,
-    prefix="/api"
-)
-
-app.include_router(
-    corrective_action_recommendations_router,
+    protected_api_router,
     prefix="/api"
 )

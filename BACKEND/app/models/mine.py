@@ -64,3 +64,8 @@ class Mine(Base):
         "Inspection",
         back_populates="mine"
     )
+
+    employees = relationship(
+    "Employee",
+    back_populates="mine"
+    )

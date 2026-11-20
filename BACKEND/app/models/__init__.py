@@ -9,3 +9,5 @@ from app.models.violation_regulation import ViolationRegulation
 from app.models.corrective_action import CorrectiveAction
 from app.models.alert import Alert
 from app.models.corrective_action_recommendation import CorrectiveActionRecommendation
+from app.models.employee import Employee    
+from app.models.user_account import UserAccount
