@@ -1,5 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Mine } from '../types';
+
+import {
+  useState,
+  useEffect,
+  useCallback
+} from 'react';
+
+import type { Mine } from '../types';
 import { mineService } from '../services/mineService';
 
 export function useMines() {
@@ -11,20 +17,31 @@ export function useMines() {
     try {
       setLoading(true);
       setError(null);
+
       const data = await mineService.getMines();
       setMines(data);
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch mines');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch mines'
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchMines();
+    void fetchMines();
   }, [fetchMines]);
 
-  return { mines, loading, error, refetch: fetchMines };
+  return {
+    mines,
+    loading,
+    error,
+    refetch: fetchMines
+  };
 }
 
 export function useMine(id?: string) {
@@ -33,22 +50,43 @@ export function useMine(id?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchMine = useCallback(async () => {
-    if (!id) return;
+    if (!id || !/^[1-9]\d*$/.test(id)) {
+      setMine(null);
+      setError('Invalid mine ID');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data = await mineService.getMineById(id);
+      setMine(null);
+
+      const data = await mineService.getMineById(
+        Number(id)
+      );
+
       setMine(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch mine details');
+      setMine(null);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch mine details'
+      );
     } finally {
       setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    fetchMine();
+    void fetchMine();
   }, [fetchMine]);
 
-  return { mine, loading, error, refetch: fetchMine };
+  return {
+    mine,
+    loading,
+    error,
+    refetch: fetchMine
+  };
 }

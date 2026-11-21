@@ -18,14 +18,13 @@ def create_mine(db: Session, mine_data: MineCreate):
             status_code=400,
             detail="Mine with this code already exists"
         )
-
+            
     new_mine = Mine(
         name=mine_data.name,
         code=mine_data.code,
         location=mine_data.location,
         state=mine_data.state,
-        district=mine_data.district,
-        description=mine_data.description
+        production_tons=mine_data.production_tons
     )
 
     db.add(new_mine)
@@ -79,12 +78,27 @@ def update_mine(
             detail="Mine not found"
         )
 
+        
     update_data = mine_data.model_dump(
         exclude_unset=True
     )
 
+    required_fields = {
+        "name",
+        "status",
+        "production_tons"
+    }
+
+    for field, value in update_data.items():
+        if field in required_fields and value is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"{field} cannot be null"
+            )
+
     for field, value in update_data.items():
         setattr(mine, field, value)
+
 
     db.commit()
     db.refresh(mine)
@@ -110,7 +124,7 @@ def deactivate_mine(
             detail="Mine not found"
         )
 
-    mine.status = "inactive"
+    mine.status = "INACTIVE"
 
     db.commit()
     db.refresh(mine)

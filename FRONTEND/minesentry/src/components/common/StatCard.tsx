@@ -9,16 +9,28 @@ import {
   Activity,
 } from 'lucide-react';
 
-type AccentColor = 'amber' | 'emerald' | 'rose' | 'zinc';
+type AccentColor = 'amber' | 'emerald' | 'rose' | 'zinc' | 'cyan';
+
+
+type StatCardTrend =
+  | {
+      value: string;
+      isPositive: boolean;
+      isNeutral?: false;
+    }
+  | {
+      value: string;
+      isNeutral: true;
+      isPositive?: never;
+    };
+
 
 interface StatCardProps {
   label: string;
   value: string | number;
   subtext?: string;
-  trend?: {
-    value: string;
-    isPositive: boolean;
-  };
+  trend?: StatCardTrend;
+
   icon?: React.ElementType;
   accentColor?: AccentColor;
   onClick?: () => void;
@@ -97,6 +109,22 @@ export function StatCard({
 
     shadow:
       'shadow-[0_0_45px_rgba(255,255,255,0.06)]',
+  },
+
+  cyan: {
+  border: 'border-white/[0.14]',
+  hoverBorder: 'hover:border-cyan-400/40',
+
+  glow: 'bg-cyan-400/25',
+
+  iconBg: 'bg-white/[0.07]',
+  iconBorder: 'border-white/[0.14]',
+  icon: 'text-cyan-400',
+
+  line: 'bg-cyan-400',
+
+  shadow:
+    'shadow-[0_0_45px_rgba(34,211,238,0.10)]',
   },
 };
 
@@ -242,7 +270,9 @@ export function StatCard({
                 }
               `}
             >
-              {trend.isPositive ? (
+              {trend.isNeutral ? (
+                <ArrowUpRight size={13} />
+              ) : trend.isPositive ? (
                 <ArrowUpRight size={13} />
               ) : (
                 <ArrowDownRight size={13} />

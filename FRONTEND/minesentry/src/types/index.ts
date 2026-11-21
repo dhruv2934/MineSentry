@@ -9,43 +9,46 @@
 // 1. MINE TYPES
 // ==========================================
 
-export type MineStatus = 'ACTIVE' | 'UNDER_AUDIT' | 'MAINTENANCE' | 'RESTRICTED';
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
+export type MineStatus = 'ACTIVE' | 'INACTIVE';
+
+export type RiskLevel =
+  | 'LOW'
+  | 'MEDIUM'
+  | 'HIGH'
+  | 'CRITICAL';
+
+// Matches backend MineResponse
 export interface Mine {
-  // Backend Core Fields
-  mine_id: string; // or id
-  id: string;
+  id: number;
   name: string;
   code: string;
-  location: string;
-  state: string;
-  district: string;
-  description: string;
+  location: string | null;
+  state: string | null;
   status: MineStatus;
+  production_tons: number;
   created_at: string;
   updated_at: string;
-
-  // Frontend Extended View-Model Fields
-  image_url: string;
-  production: string; // e.g. "720K t"
-  production_tons: number;
-  risk_score: number; // 0 - 100 (lower is safer)
-  risk_level: RiskLevel;
-  open_items: number;
-  compliance_score: number; // 0 - 100%
-  active_inspections: number;
-  open_violations: number;
-  open_corrective_actions: number;
-  seam_depth_meters: number;
-  methane_classification: 'Degree I' | 'Degree II' | 'Degree III';
-  workforce_headcount: number;
-  chief_mining_engineer: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
 }
+
+// Matches backend MineCreate
+export interface MineCreate {
+  name: string;
+  code: string;
+  location?: string | null;
+  state?: string | null;
+  production_tons?: number;
+}
+
+// Matches backend MineUpdate
+export interface MineUpdate {
+  name?: string;
+  location?: string | null;
+  state?: string | null;
+  status?: MineStatus;
+  production_tons?: number;
+}
+
 
 // ==========================================
 // 2. INSPECTION TYPES
@@ -217,3 +220,6 @@ export interface ActivityFeedItem {
   mine_name: string;
   severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }
+
+
+

@@ -1,43 +1,49 @@
-import { Mine } from '../types';
-import { mockMines } from '../data/mines';
-import { delay } from './apiClient';
+
+import { api } from './apiClient';
+
+import type {
+  Mine,
+  MineCreate,
+  MineUpdate,
+  MineStatus
+} from '../types';
 
 class MineService {
-  /**
-   * Fetches all registered mines in the portfolio.
-   * Future backend integration:
-   * const response = await api.get<Mine[]>('/mines');
-   * return response.data;
-   */
+
+  // Fetch all mines
   async getMines(): Promise<Mine[]> {
-    await delay();
-    return Promise.resolve([...mockMines]);
+    return api.get<Mine[]>('/mines/');
   }
 
-  /**
-   * Fetches a single mine by its unique mine_id or id.
-   * Future backend integration:
-   * const response = await api.get<Mine>(`/mines/${id}`);
-   * return response.data;
-   */
-  async getMineById(id: string): Promise<Mine | null> {
-    await delay();
-    const mine = mockMines.find((m) => m.mine_id === id || m.id === id);
-    return Promise.resolve(mine ? { ...mine } : null);
+  // Fetch mine by database ID
+  async getMineById(id: number): Promise<Mine> {
+    return api.get<Mine>(`/mines/${id}`);
   }
 
-  /**
-   * Updates status or metadata of a mine
-   */
-  async updateMineStatus(id: string, status: Mine['status']): Promise<Mine | null> {
-    await delay();
-    const mine = mockMines.find((m) => m.mine_id === id || m.id === id);
-    if (mine) {
-      mine.status = status;
-      mine.updated_at = new Date().toISOString();
-      return Promise.resolve({ ...mine });
-    }
-    return Promise.resolve(null);
+  // Create a mine
+  async createMine(data: MineCreate): Promise<Mine> {
+    return api.post<Mine>('/mines/', data);
+  }
+
+  // Update mine information
+  async updateMine(
+    id: number,
+    data: MineUpdate
+  ): Promise<Mine> {
+    return api.patch<Mine>(`/mines/${id}`, data);
+  }
+
+  // Change ACTIVE / INACTIVE status
+  async updateMineStatus(
+    id: number,
+    status: MineStatus
+  ): Promise<Mine> {
+    return this.updateMine(id, { status });
+  }
+
+  // Soft-deactivate mine
+  async deactivateMine(id: number): Promise<Mine> {
+    return api.delete<Mine>(`/mines/${id}`);
   }
 }
 

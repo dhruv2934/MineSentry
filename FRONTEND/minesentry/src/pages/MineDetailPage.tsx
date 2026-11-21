@@ -1,61 +1,126 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
+import type { Mine } from '../types';
 import { useMine } from '../hooks/useMines';
-import { useInspections } from '../hooks/useInspections';
-import { useObservations } from '../hooks/useObservations';
-import { useViolations } from '../hooks/useViolations';
-import { useCorrectiveActions } from '../hooks/useCorrectiveActions';
+import { getMineImage } from '../config/assets';
+
 import { StatusBadge } from '../components/common/StatusBadge';
 import { LoadingState } from '../components/common/LoadingState';
 import { EmptyState } from '../components/common/EmptyState';
+
 import {
+  ArrowLeft,
   MapPin,
   TrendingUp,
-  AlertTriangle,
-  Layers,
-  ArrowLeft,
-  ChevronRight,
-  ShieldCheck,
+  Pickaxe,
+  CalendarDays,
+  Clock3,
+  Hash,
+  Building2,
+  Map,
   ClipboardCheck,
-  AlertOctagon,
-  CheckSquare,
-  Sparkles,
-  Flame,
-  Users,
-  Compass,
-  FileText
+  ChevronRight,
 } from 'lucide-react';
-import { cn } from '../utils/cn';
 
+// ======================================================
+// FUTURE MODULE IMPORTS
+// Uncomment after connecting their backend APIs.
+// ======================================================
 
+// import { useInspections } from '../hooks/useInspections';
+// import { useObservations } from '../hooks/useObservations';
+// import { useViolations } from '../hooks/useViolations';
+// import { useCorrectiveActions } from '../hooks/useCorrectiveActions';
+// import { cn } from '../utils/cn';
 
+// ======================================================
+// DATE FORMATTER
+// ======================================================
 
+const formatDate = (value: string): string => {
+  const date = new Date(value);
 
+  if (Number.isNaN(date.getTime())) {
+    return 'Unavailable';
+  }
 
-// =========================================================
-// LOCAL MINE IMAGES
-// =========================================================
-
-const mineImagesByCode: Record<string, string> = {
-  'JH-UG-04': '/assets/images/mines/mine1.avif',
-  'KB-OC-11': '/assets/images/mines/mine2.jpeg',
-  'SG-OC-02': '/assets/images/mines/mine3.webp',
-  'TL-DS-08': '/assets/images/mines/mine4.jpeg',
-
- 
-    'RN-UG-01': '/assets/images/mines/mine5.jpeg',
-    'NY-OC-06': '/assets/images/mines/mine6.jpg',
-   
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
+// ======================================================
+// MINE BANNER IMAGE
+// Uses the same image mapping as MineCard.tsx
+// ======================================================
 
+interface MineBannerImageProps {
+  mine: Mine;
+}
 
+const MineBannerImage: React.FC<MineBannerImageProps> = ({
+  mine,
+}) => {
+  // Get image using database mine ID
+  const imageSource = getMineImage(mine);
 
+  const [failedImage, setFailedImage] = useState<string | null>(
+    null
+  );
 
+  const showImage = failedImage !== imageSource;
 
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden">
 
+      {/* Gradient fallback if image is unavailable */}
+      <div
+        className="
+          absolute inset-0
+          bg-gradient-to-br
+          from-zinc-800 via-[#12161a] to-black
+        "
+      />
 
+      {/* Mine-specific image */}
+      {showImage && (
+        <img
+          src={imageSource}
+          alt={mine.name}
+          onError={() => setFailedImage(imageSource)}
+          className="
+            absolute inset-0
+            h-full w-full
+            object-cover object-center
+          "
+        />
+      )}
 
+      {/* Dark overlay for text visibility */}
+      <div
+        className="
+          absolute inset-0
+          bg-gradient-to-t
+          from-[#080a0c]/90
+          via-[#080a0c]/45
+          to-[#080a0c]/10
+        "
+      />
+    </div>
+  );
+};
+
+// ======================================================
+// FUTURE NAVIGATION TABS
+// ======================================================
+
+/*
 type MineTab =
   | 'overview'
   | 'inspections'
@@ -65,468 +130,644 @@ type MineTab =
   | 'compliance'
   | 'risk'
   | 'activity';
+*/
+
+// ======================================================
+// MINE DETAIL PAGE
+// ======================================================
 
 export const MineDetailPage: React.FC = () => {
   const { mineId } = useParams<{ mineId: string }>();
   const navigate = useNavigate();
-  const { mine, loading } = useMine(mineId);
 
-  const [activeTab, setActiveTab] = useState<MineTab>('overview');
+  const { mine, loading, error, refetch } = useMine(mineId);
 
-  // Related data hooks filtered by this mine
-  const { inspections } = useInspections({ mine_id: mineId });
-  const { observations } = useObservations({ mine_id: mineId });
-  const { violations } = useViolations({ mine_id: mineId });
-  const { actions, approve } = useCorrectiveActions({ mine_id: mineId });
+  // ====================================================
+  // FUTURE MODULE STATE AND HOOKS
+  // ====================================================
 
-  if (loading || !mine) {
-    return <LoadingState message="Loading geological strata telemetry & mine dossier..." />;
+  /*
+  const [activeTab, setActiveTab] =
+    useState<MineTab>('overview');
+
+  // Connect these to real backend services first.
+
+  const { inspections } = useInspections({
+    mine_id: mineId
+  });
+
+  const { observations } = useObservations({
+    mine_id: mineId
+  });
+
+  const { violations } = useViolations({
+    mine_id: mineId
+  });
+
+  const { actions } = useCorrectiveActions({
+    mine_id: mineId
+  });
+
+  // Update mine_id filtering and type definitions
+  // according to each finalized backend API.
+  */
+
+  // ====================================================
+  // LOADING STATE
+  // ====================================================
+
+  if (loading) {
+    return (
+      <LoadingState message="Loading mine details..." />
+    );
   }
 
-  const tabs: { key: MineTab; label: string; count?: number }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'inspections', label: 'Inspections', count: inspections.length },
-    { key: 'observations', label: 'Observations', count: observations.length },
-    { key: 'violations', label: 'Violations', count: violations.length },
-    { key: 'corrective-actions', label: 'Corrective Actions', count: actions.length },
-    { key: 'compliance', label: 'Compliance' },
-    { key: 'risk', label: 'Risk' },
-    { key: 'activity', label: 'Activity' }
-  ];
+  // ====================================================
+  // API ERROR STATE
+  // ====================================================
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+
+        <button
+          onClick={() => navigate('/mines')}
+          className="inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Mines
+        </button>
+
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+
+          <h2 className="text-lg font-bold text-red-400">
+            Unable to load mine details
+          </h2>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            {error}
+          </p>
+
+          <button
+            onClick={() => void refetch()}
+            className="mt-5 rounded-lg bg-amber-400 px-5 py-2 text-sm font-semibold text-black hover:bg-amber-300"
+          >
+            Retry
+          </button>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ====================================================
+  // MINE NOT FOUND
+  // ====================================================
+
+  if (!mine) {
+    return (
+      <EmptyState
+        title="Mine not found"
+        description="The requested mine does not exist."
+        actionText="Back to Mines"
+        onAction={() => navigate('/mines')}
+      />
+    );
+  }
+
+  // ====================================================
+  // REAL BACKEND DATA
+  // ====================================================
+
+  const locationText =
+    [mine.location, mine.state]
+      .filter(Boolean)
+      .join(', ') || 'Location not provided';
+
+  const production = mine.production_tons.toLocaleString(
+    'en-IN',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }
+  );
+
+  // ====================================================
+  // PAGE RENDER
+  // ====================================================
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Back Navigation */}
+
+      {/* ============================================== */}
+      {/* BACK NAVIGATION */}
+      {/* ============================================== */}
+
       <button
         onClick={() => navigate('/mines')}
         className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         <span>Back to Mines Portfolio</span>
       </button>
 
-      {/* 1. MINE HERO BANNER & HEADER */}
-      <div className="relative rounded-2xl overflow-hidden border border-white/[0.1] bg-[#12161a] min-h-[260px] flex flex-col justify-end p-6 md:p-8">
-        {/* Photographic Background */}
-        <div className="absolute inset-0 z-0">
-  <img
-    src={mineImagesByCode[mine.code] || mine.image_url}
-    alt={mine.name}
-    className="w-full h-full object-cover object-center"
-    onError={(e) => {
-      const target = e.currentTarget;
+      {/* ============================================== */}
+      {/* MINE HERO BANNER */}
+      {/* ============================================== */}
 
-      if (
-        mine.image_url &&
-        target.src !== mine.image_url
-      ) {
-        target.src = mine.image_url;
-      } else {
-        target.src = '/assets/images/mine-truck.jpg';
-      }
-    }}
-  />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080a0c] via-[#080a0c]/80 to-[#080a0c]/40" />
-        </div>
+      <div
+        className="
+          relative flex min-h-[300px] flex-col
+          justify-end overflow-hidden rounded-2xl
+          border border-white/[0.1] bg-[#12161a]
+          p-6 md:p-8
+        "
+      >
 
-        {/* Banner Details */}
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        {/* Actual image assigned to this mine */}
+        <MineBannerImage
+          key={mine.id}
+          mine={mine}
+        />
+
+        {/* Hero Content */}
+        <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+
           <div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-black/60 border border-white/20 text-amber-300 tracking-wider">
+
+            {/* Mine Code and Status */}
+            <div className="mb-3 flex items-center gap-2.5">
+
+              <span className="rounded border border-white/20 bg-black/60 px-2.5 py-0.5 font-mono text-xs tracking-wider text-amber-300">
                 {mine.code}
               </span>
+
               <StatusBadge status={mine.status} />
-              <span className="text-xs font-mono text-zinc-400">
-                Seam Depth: {mine.seam_depth_meters}m
-              </span>
+
             </div>
 
-            <h1 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight">
+            {/* Mine Name */}
+            <h1 className="text-2xl font-extrabold tracking-tight text-white md:text-4xl">
               {mine.name}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-300 mt-2">
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                {mine.location}
-              </span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                Methane: {mine.methane_classification}
-              </span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-cyan-400" />
-                Workforce: {mine.workforce_headcount} Personnel
-              </span>
+            {/* Location */}
+            <div className="mt-3 flex items-center gap-2 text-xs text-zinc-300">
+
+              <MapPin className="h-4 w-4 text-amber-400" />
+
+              <span>{locationText}</span>
+
             </div>
           </div>
 
-          <div className="shrink-0 flex items-center gap-3">
-            <button
-              onClick={() => navigate('/inspections')}
-              className="px-4 py-2 text-xs font-semibold text-zinc-950 bg-amber-400 hover:bg-amber-300 rounded shadow transition-all duration-150"
-            >
-              + Conduct Inspection
-            </button>
+          {/* Inspection Navigation */}
+          <button
+            onClick={() => navigate('/inspections')}
+            className="rounded bg-amber-400 px-4 py-2 text-xs font-semibold text-zinc-950 shadow transition-all hover:bg-amber-300"
+          >
+            + Conduct Inspection
+          </button>
+
+        </div>
+      </div>
+
+      {/* ============================================== */}
+      {/* SUMMARY CARDS */}
+      {/* ============================================== */}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+        {/* PRODUCTION */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#12161a] p-5">
+
+          <div className="flex items-center gap-2 text-zinc-400">
+
+            <TrendingUp className="h-4 w-4 text-emerald-400" />
+
+            <span className="font-mono text-[11px] uppercase">
+              Current Month Production
+            </span>
+
+          </div>
+
+          <p className="mt-3 font-mono text-xl font-bold text-white md:text-2xl">
+            {production}
+
+            <span className="ml-2 text-sm text-zinc-400">
+              tonnes
+            </span>
+          </p>
+        </div>
+
+        {/* OPERATIONAL STATUS */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#12161a] p-5">
+
+          <div className="flex items-center gap-2 text-zinc-400">
+
+            <Pickaxe className="h-4 w-4 text-amber-400" />
+
+            <span className="font-mono text-[11px] uppercase">
+              Operational Status
+            </span>
+
+          </div>
+
+          <div className="mt-4">
+            <StatusBadge status={mine.status} size="md" />
           </div>
         </div>
+
+        {/* DATABASE MINE ID */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#12161a] p-5">
+
+          <div className="flex items-center gap-2 text-zinc-400">
+
+            <Hash className="h-4 w-4 text-cyan-400" />
+
+            <span className="font-mono text-[11px] uppercase">
+              Database Mine ID
+            </span>
+
+          </div>
+
+          <p className="mt-3 font-mono text-xl font-bold text-white md:text-2xl">
+            #{mine.id}
+          </p>
+        </div>
+
       </div>
 
-      {/* 2. SUMMARY TILES (Requirement 15) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-3.5 rounded-lg bg-[#12161a] border border-white/[0.08]">
-          <span className="block text-[10px] font-mono uppercase text-zinc-400">PRODUCTION</span>
-          <span className="text-lg md:text-xl font-bold font-mono text-white flex items-center gap-1 mt-1">
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-            {mine.production}
-          </span>
-        </div>
+      {/* ============================================== */}
+      {/* FUTURE SUMMARY STATISTICS */}
+      {/* ============================================== */}
 
-        <div className="p-3.5 rounded-lg bg-[#12161a] border border-white/[0.08]">
-          <span className="block text-[10px] font-mono uppercase text-zinc-400">COMPLIANCE</span>
-          <span className="text-lg md:text-xl font-bold font-mono text-emerald-400 flex items-center gap-1 mt-1">
-            <ShieldCheck className="w-4 h-4" />
-            {mine.compliance_score}%
-          </span>
-        </div>
+      {/*
+        FUTURE AGGREGATED METRICS
 
-        <div className="p-3.5 rounded-lg bg-[#12161a] border border-white/[0.08]">
-          <span className="block text-[10px] font-mono uppercase text-zinc-400">RISK SCORE</span>
-          <span
-            className={`text-lg md:text-xl font-bold font-mono flex items-center gap-1 mt-1 ${
-              mine.risk_score > 60 ? 'text-red-400' : 'text-amber-400'
-            }`}
-          >
-            <AlertTriangle className="w-4 h-4" />
-            {mine.risk_score} / 100
-          </span>
-        </div>
+        Restore these after implementing backend
+        aggregation endpoints.
 
-        <div className="p-3.5 rounded-lg bg-[#12161a] border border-white/[0.08]">
-          <span className="block text-[10px] font-mono uppercase text-zinc-400">OPEN VIOLATIONS</span>
-          <span className="text-lg md:text-xl font-bold font-mono text-red-400 flex items-center gap-1 mt-1">
-            <AlertOctagon className="w-4 h-4" />
-            {mine.open_violations}
-          </span>
-        </div>
+        Example:
 
-        <div className="p-3.5 rounded-lg bg-[#12161a] border border-white/[0.08]">
-          <span className="block text-[10px] font-mono uppercase text-zinc-400">ACTIVE INSPECTIONS</span>
-          <span className="text-lg md:text-xl font-bold font-mono text-cyan-400 flex items-center gap-1 mt-1">
-            <ClipboardCheck className="w-4 h-4" />
-            {mine.active_inspections}
-          </span>
-        </div>
+        <StatCard
+          title="Active Workforce"
+          value={mineStats.active_workers}
+        />
 
-        <div className="p-3.5 rounded-lg bg-[#12161a] border border-white/[0.08]">
-          <span className="block text-[10px] font-mono uppercase text-zinc-400">CORRECTIVE ACTIONS</span>
-          <span className="text-lg md:text-xl font-bold font-mono text-amber-400 flex items-center gap-1 mt-1">
-            <CheckSquare className="w-4 h-4" />
-            {mine.open_corrective_actions}
-          </span>
-        </div>
-      </div>
+        <StatCard
+          title="Open Violations"
+          value={mineStats.open_violations}
+        />
 
-      {/* 3. NAVIGATION TABS (Progressive Disclosure) */}
-      <div className="flex items-center gap-1 border-b border-white/[0.08] overflow-x-auto pb-px">
-        {tabs.map((tab) => (
+        <StatCard
+          title="Active Inspections"
+          value={mineStats.active_inspections}
+        />
+
+        <StatCard
+          title="Open Corrective Actions"
+          value={mineStats.open_corrective_actions}
+        />
+
+        The StatCard component is illustrative.
+        These values must come from a real API.
+      */}
+
+      {/* ============================================== */}
+      {/* FUTURE TABS - COMMENTED OUT */}
+      {/* ============================================== */}
+
+      {/*
+      <div className="flex items-center gap-1 overflow-x-auto border-b border-white/[0.08]">
+
+        {[
+          'overview',
+          'inspections',
+          'observations',
+          'violations',
+          'corrective-actions',
+          'compliance',
+          'risk',
+          'activity'
+        ].map((tab) => (
+
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              'px-4 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap transition-all border-b-2 flex items-center gap-1.5',
-              activeTab === tab.key
-                ? 'border-amber-500 text-amber-400 bg-amber-500/10 rounded-t'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
-            )}
+            key={tab}
+            onClick={() => setActiveTab(tab as MineTab)}
+            className={
+              activeTab === tab
+                ? 'border-b-2 border-amber-500 px-4 py-3 text-amber-400'
+                : 'px-4 py-3 text-zinc-400'
+            }
           >
-            <span>{tab.label}</span>
-            {tab.count !== undefined && tab.count > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-300 font-mono">
-                {tab.count}
-              </span>
-            )}
+            {tab.replace(/-/g, ' ').toUpperCase()}
           </button>
+
         ))}
       </div>
+      */}
 
-      {/* 4. TAB CONTENTS */}
-      <div className="min-h-[300px]">
-        {/* OVERVIEW TAB */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-[#12161a] border border-white/[0.08] rounded-xl p-6">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white mb-2">
-                  Facility Description &amp; Extraction Methodology
-                </h3>
-                <p className="text-xs text-zinc-300 leading-relaxed">{mine.description}</p>
-                <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <span className="text-zinc-500">Chief Engineer</span>
-                    <p className="font-semibold text-white mt-0.5">{mine.chief_mining_engineer}</p>
-                  </div>
-                  <div>
-                    <span className="text-zinc-500">Coordinates</span>
-                    <p className="font-mono text-zinc-300 mt-0.5">
-                      {mine.coordinates.lat}° N, {mine.coordinates.lng}° E
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-zinc-500">State / District</span>
-                    <p className="font-semibold text-white mt-0.5">
-                      {mine.state} / {mine.district}
-                    </p>
-                  </div>
-                </div>
-              </div>
+      {/* ============================================== */}
+      {/* MAIN CONTENT */}
+      {/* ============================================== */}
 
-              {/* Linked Violations Preview */}
-              <div className="bg-[#12161a] border border-white/[0.08] rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                    Open Statutory Violations ({violations.length})
-                  </h3>
-                  <button
-                    onClick={() => setActiveTab('violations')}
-                    className="text-xs text-amber-400 hover:underline"
-                  >
-                    View All →
-                  </button>
-                </div>
-                {violations.length === 0 ? (
-                  <p className="text-xs text-zinc-400">Zero active statutory notices.</p>
-                ) : (
-                  <div className="space-y-2.5">
-                    {violations.map((v) => (
-                      <div
-                        key={v.id}
-                        onClick={() => navigate(`/violations/${v.id}`)}
-                        className="p-3 rounded-lg bg-[#181d22] border border-white/[0.06] hover:border-red-500/40 cursor-pointer flex items-center justify-between transition-colors"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold text-red-400">{v.id}</span>
-                            <span className="text-xs font-semibold text-zinc-200">{v.title}</span>
-                          </div>
-                          <span className="text-[11px] text-zinc-500">{v.regulation_clause}</span>
-                        </div>
-                        <StatusBadge status={v.severity} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+        {/* LEFT COLUMN */}
+        <div className="space-y-6 lg:col-span-2">
+
+          {/* ========================================== */}
+          {/* MINE INFORMATION */}
+          {/* ========================================== */}
+
+          <div className="rounded-xl border border-white/[0.08] bg-[#12161a] p-6">
+
+            <div className="mb-6 flex items-center gap-2">
+
+              <Building2 className="h-4 w-4 text-amber-400" />
+
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                Mine Information
+              </h3>
+
             </div>
 
-            {/* Right Column: AI RAG & Strata Summary */}
-            <div className="space-y-6">
-              <div className="bg-[#12161a] border border-white/[0.08] rounded-xl p-6">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400 mb-3">
-                  <Sparkles className="w-4 h-4" />
-                  AI RAG Strata Intelligence
-                </div>
-                <p className="text-xs text-zinc-400 leading-relaxed mb-4">
-                  Continuous LangGraph synthesis for {mine.name} indicates heightened strata displacement risks near fault line intersections.
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+              {/* Mine Name */}
+              <div>
+                <span className="block text-xs text-zinc-500">
+                  Mine Name
+                </span>
+
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {mine.name}
                 </p>
-                <div className="p-3 rounded bg-amber-950/20 border border-amber-500/30 text-xs text-amber-200">
-                  <strong>Recommendation:</strong> Ensure CMR-123 support plans are pre-tensioned to 120 kN along Seam XIII heading.
-                </div>
               </div>
 
-              <div className="bg-[#12161a] border border-white/[0.08] rounded-xl p-6">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-3">
-                  Quick Actions
-                </h4>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setActiveTab('inspections')}
-                    className="w-full text-left px-3 py-2 rounded bg-[#181d22] hover:bg-[#20252b] text-xs text-zinc-200 flex items-center justify-between transition-colors"
-                  >
-                    <span>View Inspection Log</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('corrective-actions')}
-                    className="w-full text-left px-3 py-2 rounded bg-[#181d22] hover:bg-[#20252b] text-xs text-zinc-200 flex items-center justify-between transition-colors"
-                  >
-                    <span>Remediation Action Items</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
-                  </button>
-                </div>
+              {/* Mine Code */}
+              <div>
+                <span className="block text-xs text-zinc-500">
+                  Mine Code
+                </span>
+
+                <p className="mt-1 font-mono text-sm font-semibold text-amber-400">
+                  {mine.code}
+                </p>
               </div>
+
+              {/* Location */}
+              <div>
+                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Location
+                </span>
+
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {mine.location ?? 'Not provided'}
+                </p>
+              </div>
+
+              {/* State */}
+              <div>
+                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                  <Map className="h-3.5 w-3.5" />
+                  State
+                </span>
+
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {mine.state ?? 'Not provided'}
+                </p>
+              </div>
+
+              {/* Created At */}
+              <div>
+                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Created At
+                </span>
+
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {formatDate(mine.created_at)}
+                </p>
+              </div>
+
+              {/* Updated At */}
+              <div>
+                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  Last Updated
+                </span>
+
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {formatDate(mine.updated_at)}
+                </p>
+              </div>
+
             </div>
           </div>
-        )}
 
-        {/* INSPECTIONS TAB */}
-        {activeTab === 'inspections' && (
-          <div className="space-y-4">
-            {inspections.length === 0 ? (
-              <EmptyState title="No inspections logged for this mine" />
-            ) : (
-              <div className="bg-[#12161a] border border-white/[0.08] rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#181d22] border-b border-white/[0.08] text-zinc-400 uppercase font-mono">
-                    <tr>
-                      <th className="p-3.5">ID</th>
-                      <th className="p-3.5">Date</th>
-                      <th className="p-3.5">Type</th>
-                      <th className="p-3.5">Inspector</th>
-                      <th className="p-3.5">Status</th>
-                      <th className="p-3.5 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/[0.04]">
-                    {inspections.map((i) => (
-                      <tr
-                        key={i.id}
-                        onClick={() => navigate(`/inspections/${i.id}`)}
-                        className="hover:bg-white/[0.02] cursor-pointer transition-colors"
-                      >
-                        <td className="p-3.5 font-mono font-bold text-amber-400">{i.id}</td>
-                        <td className="p-3.5 text-zinc-300">{i.inspection_date}</td>
-                        <td className="p-3.5 text-white font-medium">{i.type}</td>
-                        <td className="p-3.5 text-zinc-300">{i.inspector_name}</td>
-                        <td className="p-3.5"><StatusBadge status={i.status} /></td>
-                        <td className="p-3.5 text-right text-amber-400 hover:underline">View Dossier →</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {/* ========================================== */}
+          {/* FUTURE INSPECTIONS TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore after connecting useInspections
+            to the real Inspection API.
+
+            Expected fields:
+
+            id
+            mine_id
+            inspection_date
+            inspection_type
+            inspector_name
+            status
+            priority
+
+            Example future rendering:
+
+            {activeTab === 'inspections' && (
+              <InspectionTable inspections={inspections} />
             )}
-          </div>
-        )}
+          */}
 
-        {/* OBSERVATIONS TAB */}
-        {activeTab === 'observations' && (
-          <div className="space-y-3">
-            {observations.map((o) => (
-              <div
-                key={o.id}
-                onClick={() => navigate(`/observations/${o.id}`)}
-                className="p-4 rounded-xl bg-[#12161a] border border-white/[0.08] hover:border-amber-500/40 cursor-pointer transition-all"
+          {/* ========================================== */}
+          {/* FUTURE OBSERVATIONS TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore after connecting Observation APIs.
+
+            Observations should be retrieved through
+            inspections associated with this mine.
+
+            Use:
+            observation_text
+            location
+            severity
+            evidence_url
+
+            Do not display unsupported AI confidence.
+          */}
+
+          {/* ========================================== */}
+          {/* FUTURE VIOLATIONS TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore after connecting Violation APIs.
+
+            Relationship:
+
+            Mine
+              -> Inspection
+              -> Observation
+              -> Violation
+
+            Display actual:
+            title
+            description
+            severity
+            category
+            status
+            risk_score
+
+            Regulation references should come from
+            the real regulation association API.
+          */}
+
+          {/* ========================================== */}
+          {/* FUTURE CORRECTIVE ACTIONS TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore after connecting CorrectiveAction APIs.
+
+            Display:
+            title
+            description
+            assigned_to
+            due_date
+            status
+            completed_at
+            risk_score
+
+            Only implement approval/completion controls
+            after backend status transitions are finalized.
+          */}
+
+          {/* ========================================== */}
+          {/* FUTURE COMPLIANCE TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore when a real compliance score or
+            verified audit information is available.
+
+            Do not hardcode DGMS grades or audit dates.
+          */}
+
+          {/* ========================================== */}
+          {/* FUTURE RISK TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore after connecting the deterministic
+            risk assessment engine.
+
+            Calculate mine-level risk only after
+            defining the aggregation formula.
+          */}
+
+          {/* ========================================== */}
+          {/* FUTURE ACTIVITY TAB */}
+          {/* ========================================== */}
+
+          {/*
+            Restore when actual timestamped activity
+            logs or lifecycle events are available.
+
+            Do not display simulated live telemetry.
+          */}
+
+        </div>
+
+        {/* ============================================ */}
+        {/* RIGHT COLUMN */}
+        {/* ============================================ */}
+
+        <div className="space-y-6">
+
+          {/* QUICK ACTIONS */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#12161a] p-6">
+
+            <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white">
+              Quick Actions
+            </h4>
+
+            <div className="space-y-2">
+
+              <button
+                onClick={() => navigate('/inspections')}
+                className="flex w-full items-center justify-between rounded bg-[#181d22] px-3 py-3 text-left text-xs text-zinc-200 transition-colors hover:bg-[#20252b]"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-cyan-400">{o.id}</span>
-                    <h4 className="text-sm font-bold text-white">{o.title}</h4>
-                  </div>
-                  <StatusBadge status={o.severity} />
-                </div>
-                <p className="text-xs text-zinc-400">{o.description}</p>
-                <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
-                  <span>Reported: {o.reported_by}</span>
-                  <span className="text-amber-400">AI Confidence: {(o.ai_confidence_score * 100).toFixed(0)}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <span className="flex items-center gap-2">
+                  <ClipboardCheck className="h-4 w-4 text-amber-400" />
+                  View Inspections
+                </span>
 
-        {/* VIOLATIONS TAB */}
-        {activeTab === 'violations' && (
-          <div className="space-y-3">
-            {violations.map((v) => (
-              <div
-                key={v.id}
-                onClick={() => navigate(`/violations/${v.id}`)}
-                className="p-4 rounded-xl bg-[#12161a] border border-white/[0.08] hover:border-red-500/40 cursor-pointer transition-all"
+                <ChevronRight className="h-4 w-4 text-zinc-500" />
+              </button>
+
+              <button
+                onClick={() => navigate('/mines')}
+                className="flex w-full items-center justify-between rounded bg-[#181d22] px-3 py-3 text-left text-xs text-zinc-200 transition-colors hover:bg-[#20252b]"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-red-400">{v.id}</span>
-                    <h4 className="text-sm font-bold text-white">{v.title}</h4>
-                  </div>
-                  <StatusBadge status={v.severity} />
-                </div>
-                <p className="text-xs text-zinc-400">{v.description}</p>
-                <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
-                  <span>Clause: {v.regulation_clause}</span>
-                  <span className="text-red-400">Due: {v.due_date}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <span className="flex items-center gap-2">
+                  <Pickaxe className="h-4 w-4 text-amber-400" />
+                  All Mines
+                </span>
 
-        {/* CORRECTIVE ACTIONS TAB */}
-        {activeTab === 'corrective-actions' && (
-          <div className="space-y-3">
-            {actions.map((a) => (
-              <div
-                key={a.id}
-                className="p-4 rounded-xl bg-[#12161a] border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="font-mono text-xs font-bold text-amber-400">{a.id}</span>
-                    <h4 className="text-sm font-bold text-white">{a.title}</h4>
-                    {a.ai_recommended && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">
-                        AI Recommended
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-zinc-400">{a.description}</p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <StatusBadge status={a.status} />
-                  {a.status === 'pending_approval' && (
-                    <button
-                      onClick={() => approve(a.id)}
-                      className="px-3 py-1.5 text-xs font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-300 rounded shadow"
-                    >
-                      Authorize
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <ChevronRight className="h-4 w-4 text-zinc-500" />
+              </button>
 
-        {/* COMPLIANCE TAB */}
-        {activeTab === 'compliance' && (
-          <div className="bg-[#12161a] border border-white/[0.08] rounded-xl p-6">
-            <h3 className="text-base font-bold text-white mb-2">
-              Statutory Compliance Dossier for {mine.name}
-            </h3>
-            <p className="text-xs text-zinc-400 mb-6">
-              Tracked against Coal Mines Regulations 2017 &amp; Directorate General of Mines Safety circulars.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-[#181d22] border border-white/[0.06]">
-                <span className="text-xs text-zinc-400">Statutory Score</span>
-                <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">
-                  {mine.compliance_score}%
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-[#181d22] border border-white/[0.06]">
-                <span className="text-xs text-zinc-400">DGMS Category</span>
-                <p className="text-2xl font-bold font-mono text-white mt-1">Grade A</p>
-              </div>
-              <div className="p-4 rounded-lg bg-[#181d22] border border-white/[0.06]">
-                <span className="text-xs text-zinc-400">Last External Audit</span>
-                <p className="text-2xl font-bold font-mono text-zinc-300 mt-1">14 Sep 2026</p>
-              </div>
             </div>
           </div>
-        )}
 
-        {/* RISK & ACTIVITY TABS */}
-        {(activeTab === 'risk' || activeTab === 'activity') && (
-          <div className="bg-[#12161a] border border-white/[0.08] rounded-xl p-6">
-            <h3 className="text-base font-bold text-white capitalize mb-2">{activeTab} Details</h3>
-            <p className="text-xs text-zinc-400">
-              Live telemetry streams and geological sensor log for {mine.name} updated every 60 seconds.
+          {/* DATA SOURCE */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#12161a] p-6">
+
+            <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-white">
+              Data Source
+            </h4>
+
+            <p className="text-xs leading-relaxed text-zinc-400">
+              Mine information is retrieved from the
+              MineSentry FastAPI backend and stored
+              in PostgreSQL.
             </p>
+
           </div>
-        )}
+
+          {/* ========================================== */}
+          {/* FUTURE AI / RAG PANEL */}
+          {/* ========================================== */}
+
+          {/*
+            Restore only when the AI/RAG backend
+            returns verified analysis results.
+
+            Required:
+            - Actual AI analysis
+            - Related RegulationChunk references
+            - Processing status
+            - Generation timestamp
+            - No hardcoded safety claims
+          */}
+
+        </div>
       </div>
     </div>
   );

@@ -37,3 +37,31 @@ export const ASSETS = {
 } as const;
 
 export type AssetConfig = typeof ASSETS;
+
+
+
+
+
+
+
+
+import type { Mine } from '../types';
+
+// Six local mine photographs
+const mineImages = [
+  '/assets/images/mines/mine1.avif',
+  '/assets/images/mines/mine2.jpeg',
+  '/assets/images/mines/mine3.webp',
+  '/assets/images/mines/mine4.jpeg',
+  '/assets/images/mines/mine5.jpeg',
+  '/assets/images/mines/mine6.jpg',
+];
+
+// Assign an image to a mine based on its database ID
+export const getMineImage = (mine: Mine): string => {
+  const index =
+    ((mine.id - 1) % mineImages.length +
+      mineImages.length) % mineImages.length;
+
+  return mineImages[index];
+};

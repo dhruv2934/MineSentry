@@ -3,23 +3,52 @@ import { useNavigate } from 'react-router-dom';
 import { ASSETS } from '../config/assets';
 import { ArrowRight } from 'lucide-react';
 
+import { authService } from '../services/authservice';
+
+
+
+
+
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  // handle login
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
+  setErrorMessage('');
 
-    // Temporary prototype login
-    setTimeout(() => {
-      navigate('/home');
-    }, 450);
-  };
+  try {
+    // Authenticate using the actual FastAPI backend
+    await authService.login(
+      userId.trim(),
+      password
+    );
+
+    // Clear password from component state
+    setPassword('');
+
+    // Navigate after successful authentication
+    navigate('/home');
+
+  } catch (error: unknown) {
+
+    setErrorMessage(
+      error instanceof Error
+        ? error.message
+        : 'Login failed. Please try again.'
+    );
+
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#080a0c] text-white">
@@ -143,6 +172,15 @@ export const LandingPage: React.FC = () => {
 
 
                 {/* Login */}
+
+                {errorMessage && (
+                          <p
+                            role="alert"
+                            className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300"
+                          >
+                            {errorMessage}
+                          </p>
+                )}
 
                 <button
                   type="submit"

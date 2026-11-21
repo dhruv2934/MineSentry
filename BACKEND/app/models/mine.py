@@ -4,6 +4,9 @@ from sqlalchemy import Column, Integer, String, Text, DateTime
 from app.core.database import Base
 from sqlalchemy.orm import relationship
 
+from sqlalchemy import Numeric
+from decimal import Decimal
+
 class Mine(Base):
     __tablename__ = "mines"
 
@@ -31,21 +34,19 @@ class Mine(Base):
         nullable=True
     )
 
-    district = Column(
-        String(100),
-        nullable=True
-    )
-
-    description = Column(
-        Text,
-        nullable=True
+    production_tons = Column(
+        Numeric(14, 2),
+        nullable=False,
+        default=Decimal("0.00")
     )
 
     status = Column(
-        String(30), 
+        String(30),
         nullable=False,
-        default="Inactive"
-        )
+        default="INACTIVE"
+    )
+
+    
     created_at = Column(
         DateTime,
         default=datetime.utcnow,
